@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Owner Panel</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="app.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Create Event</h2>
+
+<input id="eventName" placeholder="Event name">
+<input id="race" placeholder="Race to">
+<input id="tables" placeholder="Tables">
+
+<button onclick="createEvent()">Create</button>
+
+<hr>
+
+<h2>Add Player</h2>
+
+<input id="playerName">
+<button onclick="addPlayer()">Add</button>
+
+<hr>
+
+<button onclick="generate()">Generate Bracket</button>
+
+</div>
+
+<script>
+
+let eventId=null
+let players=[]
+
+async function createEvent(){
+
+const { data } = await supabase
+.from("events")
+.insert({
+name:eventName.value,
+race_to:race.value,
+tables:tables.value
+})
+.select()
+.single()
+
+eventId=data.id
+alert("event created")
+}
+
+async function addPlayer(){
+
+const { data } = await supabase
+.from("players")
+.insert({
+name:playerName.value
+})
+.select()
+.single()
+
+players.push(data)
+}
+
+async function generate(){
+
+for(let i=0;i<players.length;i+=2){
+
+await supabase
+.from("matches")
+.insert({
+event_id:eventId,
+round:1,
+table_number:(i/2)+1,
+player1:players[i].name,
+player2:players[i+1]?.name || "BYE"
+})
+
+}
+
+alert("Bracket dibuat")
+}
+
+</script>
+
+</body>
+</html>
