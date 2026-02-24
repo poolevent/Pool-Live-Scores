@@ -1,63 +1,47 @@
 body{
-background:#020617;
+background:#0b1220;
 color:white;
 font-family:Inter,Arial;
 margin:0;
 }
 
-header{
+.header{
+padding:18px;
 background:#0f172a;
-padding:14px 24px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.nav button{
-background:#111827;
-color:white;
-border:none;
-padding:8px 14px;
-border-radius:8px;
-margin-left:6px;
-cursor:pointer;
+font-size:22px;
+font-weight:600;
 }
 
 .container{
-max-width:1400px;
+padding:20px;
+max-width:1000px;
 margin:auto;
-padding:24px;
 }
 
 .match{
 background:#111827;
 border-radius:12px;
-padding:14px;
-margin-bottom:10px;
-transition:.2s;
+padding:16px;
+margin-bottom:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
-.match:hover{
-transform:scale(1.02);
+.team{
+width:40%;
 }
 
 .score{
-font-size:32px;
-font-weight:700;
-margin-top:6px;
+font-size:22px;
+font-weight:bold;
 }
 
-.player-row{
-display:flex;
-justify-content:space-between;
-}
-
-.bracket{
-display:flex;
-gap:60px;
-padding:30px;
-}
-
-.round{
-min-width:220px;
+.btn{
+background:#e11d48;
+border:none;
+color:white;
+padding:6px 10px;
+border-radius:6px;
+cursor:pointer;
 }
