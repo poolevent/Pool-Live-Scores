@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="app.js"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Admin Match Control</h2>
+
+<div id="admin"></div>
+
+</div>
+
+<script>
+
+async function load(){
+
+const matches = await getMatches()
+
+let html=""
+
+matches.forEach(m=>{
+html+=`
+<div class="match">
+${m.player1} vs ${m.player2}
+
+<div class="score">
+${m.score1} - ${m.score2}
+</div>
+
+<button onclick="score('${m.id}',1)">+1</button>
+<button onclick="score('${m.id}',2)">+1</button>
+</div>
+`
+})
+
+admin.innerHTML=html
+}
+
+async function score(id,p){
+await addScore(id,p)
+load()
+}
+
+load()
+
+</script>
+
+</body>
+</html>
