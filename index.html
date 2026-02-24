@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pool Event</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="app.js"></script>
+</head>
+
+<body>
+
+<header>
+<div>Garasi Match League</div>
+
+<div class="nav">
+<button onclick="location.href='bracket.html'">Bracket</button>
+<button onclick="location.href='admin.html'">Admin</button>
+<button onclick="location.href='owner.html'">Owner</button>
+</div>
+</header>
+
+<div class="container">
+<div id="matchList"></div>
+</div>
+
+<script>
+
+async function load(){
+
+const matches = await getMatches()
+
+let html=""
+
+matches.forEach(m=>{
+html+=`
+<div class="match">
+Table ${m.table_number}
+
+<div class="player-row">
+${m.player1}
+</div>
+
+<div class="player-row">
+${m.player2}
+</div>
+
+<div class="score">
+${m.score1} - ${m.score2}
+</div>
+
+</div>
+`
+})
+
+matchList.innerHTML=html
+}
+
+load()
+setInterval(load,2000)
+
+</script>
+
+</body>
+</html>
