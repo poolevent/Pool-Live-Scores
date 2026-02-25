@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Owner Panel</title>
-<link rel="stylesheet" href="style.css">
+<title>Owner</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<h2>Owner Control</h2>
+
+<input id="race" type="number" placeholder="Race To">
+<button onclick="updateRace()">Update Race</button>
+
+<select id="format">
+  <option value="round_robin">Round Robin</option>
+  <option value="knockout">Knockout</option>
+</select>
+<button onclick="updateFormat()">Update Format</button>
+
+</div>
+
 <script src="supabase.js"></script>
 <script src="app.js"></script>
-</head>
-
-<body>
-
-<h2>Create Event</h2>
-
-<input id="eventNameInput" placeholder="Event Name">
-<input id="venueInput" placeholder="Venue">
-<input id="raceInput" placeholder="Race To">
-
-<select id="formatInput">
-<option value="round_robin">Round Robin</option>
-<option value="knockout">Knockout</option>
-<option value="double_elimination">Double Elimination</option>
-</select>
-
-<button onclick="createEvent()">Create</button>
-
 </body>
 </html>
