@@ -1,5 +1,6 @@
 let EVENT_ID;
 
+/* ===== GET LIVE EVENT ===== */
 async function getLiveEvent(){
  const {data}=await supabaseClient
    .from("events")
@@ -7,15 +8,23 @@ async function getLiveEvent(){
    .eq("status","live")
    .limit(1)
    .single();
+
+ if(!data) return;
  EVENT_ID=data.id;
  return data;
 }
 
-/* ========= VIEWER ========= */
+/* ===== VIEWER ===== */
 async function initViewer(){
  const event=await getLiveEvent();
+ if(!event){
+  document.getElementById("eventName").innerText="No Live Event";
+  return;
+ }
+
  document.getElementById("eventName").innerText=event.name;
  document.getElementById("raceInfo").innerText="Race To "+event.race_to;
+
  loadMatches();
  loadBracket();
  realtime();
@@ -28,16 +37,17 @@ async function loadMatches(){
   .eq("event_id",EVENT_ID);
 
  const el=document.getElementById("matches");
- el.innerHTML="";
- data.forEach(m=>{
+ if(!el) return;
+ el.innerHTML="<h3>Matches</h3>";
+
+ data?.forEach(m=>{
   el.innerHTML+=`
    <div class="card">
-    R${m.round} :
+    R${m.round}
     ${m.p1?.name||"-"} ${m.score1}
     vs
     ${m.score2} ${m.p2?.name||"-"}
-    <br>
-    Table ${m.table_no||"-"}
+    <br>Table ${m.table_no||"-"}
     ${m.streaming?"<span class='streaming'>●LIVE</span>":""}
    </div>`;
  });
@@ -51,10 +61,12 @@ async function loadBracket(){
   .order("round",{ascending:true});
 
  const el=document.getElementById("bracket");
+ if(!el) return;
+
  el.innerHTML="<h3>Bracket</h3>";
 
  let grouped={};
- data.forEach(m=>{
+ data?.forEach(m=>{
   if(!grouped[m.round]) grouped[m.round]=[];
   grouped[m.round].push(m);
  });
@@ -72,7 +84,7 @@ async function loadBracket(){
  });
 }
 
-/* ========= ADMIN ========= */
+/* ===== ADMIN ===== */
 async function initAdmin(){
  await getLiveEvent();
  loadMatches();
@@ -121,22 +133,16 @@ async function generateKnockout(eventId,topN){
  }
 }
 
-/* ========= OWNER ========= */
+/* ===== OWNER ===== */
 async function updateRace(){
+ await getLiveEvent();
  const val=document.getElementById("race").value;
  await supabaseClient.from("events")
  .update({race_to:val})
  .eq("id",EVENT_ID);
 }
 
-async function updateFormat(){
- const val=document.getElementById("format").value;
- await supabaseClient.from("events")
- .update({format:val})
- .eq("id",EVENT_ID);
-}
-
-/* ========= REALTIME ========= */
+/* ===== REALTIME ===== */
 function realtime(){
  supabaseClient.channel("live")
  .on("postgres_changes",
