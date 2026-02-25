@@ -1,29 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<script src="supabase.js"></script>
 <script>
 async function checkRole(){
 
-  const { data: { user } } = await supabaseClient.auth.getUser();
+ const { data: { user } } = await supabaseClient.auth.getUser();
 
-  // 🔴 kalau belum login
-  if (!user) {
-    location.href = "login.html";
-    return;
-  }
+ if(!user){
+   location.href="login.html";
+   return;
+ }
 
-  const { data, error } = await supabaseClient
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+ const { data } = await supabaseClient
+   .from("profiles")
+   .select("role")
+   .eq("id",user.id)
+   .single();
 
-  if (error || !data) {
-    alert("Profile not found");
-    return;
-  }
+ if(!data){
+   alert("Profile missing");
+   return;
+ }
 
-  if (data.role === "owner") location.href = "owner.html";
-  else if (data.role === "admin") location.href = "admin.html";
-  else location.href = "index.html";
+ if(data.role==="owner") location.href="owner.html";
+ else if(data.role==="admin") location.href="admin.html";
+ else location.href="index.html";
 }
 
 checkRole();
 </script>
+
+</body>
+</html>
