@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+<script src="supabase.js"></script>
+<script>
+async function checkRole(){
+ const {data:user}=await supabaseClient.auth.getUser();
+ const {data}=await supabaseClient
+   .from("profiles")
+   .select("role")
+   .eq("id",user.user.id)
+   .single();
+
+ if(data.role==="owner") location.href="owner.html";
+ else if(data.role==="admin") location.href="admin.html";
+ else location.href="index.html";
+}
+checkRole();
+</script>
+</body>
+</html>
