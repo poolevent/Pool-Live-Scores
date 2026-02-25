@@ -1,239 +1,146 @@
-document.addEventListener("DOMContentLoaded", () => {
-    initRealtime();
-    loadLive();
-    loadAdminMatches();
-});
+let EVENT_ID;
 
-/* =========================
-LIVE MATCHES
-========================= */
-
-async function loadLive(){
-    const { data } = await supabaseClient
-        .from("matches")
-        .select("*")
-        .eq("status","live")
-        .order("id",{ascending:true});
-
-    renderMatches(data || []);
+async function getLiveEvent(){
+ const {data}=await supabaseClient
+   .from("events")
+   .select("*")
+   .eq("status","live")
+   .limit(1)
+   .single();
+ EVENT_ID=data.id;
+ return data;
 }
 
-async function loadUpcoming(){
-    const { data } = await supabaseClient
-        .from("matches")
-        .select("*")
-        .eq("status","upcoming")
-        .order("id",{ascending:true});
-
-    renderMatches(data || []);
+/* ========= VIEWER ========= */
+async function initViewer(){
+ const event=await getLiveEvent();
+ document.getElementById("eventName").innerText=event.name;
+ document.getElementById("raceInfo").innerText="Race To "+event.race_to;
+ loadMatches();
+ loadBracket();
+ realtime();
 }
 
-async function loadFinished(){
-    const { data } = await supabaseClient
-        .from("matches")
-        .select("*")
-        .eq("status","finished")
-        .order("id",{ascending:true});
+async function loadMatches(){
+ const {data}=await supabaseClient
+  .from("matches")
+  .select(`*,p1:player1(name),p2:player2(name)`)
+  .eq("event_id",EVENT_ID);
 
-    renderMatches(data || []);
+ const el=document.getElementById("matches");
+ el.innerHTML="";
+ data.forEach(m=>{
+  el.innerHTML+=`
+   <div class="card">
+    R${m.round} :
+    ${m.p1?.name||"-"} ${m.score1}
+    vs
+    ${m.score2} ${m.p2?.name||"-"}
+    <br>
+    Table ${m.table_no||"-"}
+    ${m.streaming?"<span class='streaming'>●LIVE</span>":""}
+   </div>`;
+ });
 }
 
-/* =========================
-PLAYERS TAB
-========================= */
+async function loadBracket(){
+ const {data}=await supabaseClient
+  .from("matches")
+  .select(`*,p1:player1(name),p2:player2(name)`)
+  .eq("event_id",EVENT_ID)
+  .order("round",{ascending:true});
 
-async function loadPlayers(){
-    const { data } = await supabaseClient
-        .from("players")
-        .select("*")
-        .order("name");
+ const el=document.getElementById("bracket");
+ el.innerHTML="<h3>Bracket</h3>";
 
-    const container = document.getElementById("content");
-    if(!container) return;
+ let grouped={};
+ data.forEach(m=>{
+  if(!grouped[m.round]) grouped[m.round]=[];
+  grouped[m.round].push(m);
+ });
 
-    container.innerHTML = "";
-
-    data.forEach(p=>{
-        container.innerHTML += `
-        <div class="match">
-            ${p.flag ? `<img src="${p.flag}" width="20">` : ""}
-            ${p.name}
-        </div>
-        `;
-    });
+ Object.keys(grouped).forEach(r=>{
+  el.innerHTML+=`<h4>Round ${r}</h4>`;
+  grouped[r].forEach(m=>{
+   el.innerHTML+=`
+    <div class="card bracket-line">
+     ${m.p1?.name||"-"} (${m.score1})
+     vs
+     ${m.p2?.name||"-"} (${m.score2})
+    </div>`;
+  });
+ });
 }
 
-/* =========================
-VENUE TAB
-========================= */
-
-async function loadVenue(){
-    const { data } = await supabaseClient
-        .from("events")
-        .select("*")
-        .limit(1);
-
-    const container = document.getElementById("content");
-    if(!container) return;
-
-    if(data.length === 0){
-        container.innerHTML = "No Venue";
-        return;
-    }
-
-    container.innerHTML = `
-    <div class="match">
-        Venue: ${data[0].venue}
-    </div>
-    `;
+/* ========= ADMIN ========= */
+async function initAdmin(){
+ await getLiveEvent();
+ loadMatches();
 }
 
-/* =========================
-RENDER MATCH
-========================= */
+async function shuffle(){
+ const {data}=await supabaseClient
+  .from("players")
+  .select("*")
+  .eq("event_id",EVENT_ID);
 
-function renderMatches(matches){
-    const container = document.getElementById("content");
-    if(!container) return;
-
-    container.innerHTML = "";
-
-    matches.forEach(match=>{
-        container.innerHTML += `
-        <div class="match">
-            <div>
-                ${match.player1}
-                <span class="score">${match.score1 ?? 0}</span>
-                vs
-                <span class="score">${match.score2 ?? 0}</span>
-                ${match.player2}
-            </div>
-
-            <div>
-                Table ${match.table_no ?? "-"}
-            </div>
-        </div>
-        `;
-    });
+ const shuffled=data.sort(()=>Math.random()-0.5);
+ for(let i=0;i<shuffled.length;i++){
+  await supabaseClient
+   .from("players")
+   .update({seed:i+1})
+   .eq("id",shuffled[i].id);
+ }
+ alert("Shuffled");
 }
 
-/* =========================
-ADMIN PANEL
-========================= */
-
-async function loadAdminMatches(){
-    const { data } = await supabaseClient
-        .from("matches")
-        .select("*")
-        .order("id");
-
-    const div = document.getElementById("matchesAdmin");
-    if(!div) return;
-
-    div.innerHTML = "";
-
-    data.forEach(match=>{
-        div.innerHTML += `
-        <div class="match">
-            ${match.player1}
-            ${match.score1}
-
-            <button onclick="addScore(${match.id},1)">+</button>
-
-            VS
-
-            <button onclick="addScore(${match.id},2)">+</button>
-
-            ${match.score2}
-            ${match.player2}
-        </div>
-        `;
-    });
+async function makeKO(){
+ const topN=parseInt(document.getElementById("topN").value);
+ generateKnockout(EVENT_ID,topN);
 }
 
-/* =========================
-UPDATE SCORE
-========================= */
+async function generateKnockout(eventId,topN){
+ const {data}=await supabaseClient
+  .from("standings")
+  .select("*")
+  .eq("event_id",eventId)
+  .order("wins",{ascending:false})
+  .limit(topN);
 
-async function addScore(id,player){
+ let size=1;
+ while(size<topN) size*=2;
 
-    const { data } = await supabaseClient
-        .from("matches")
-        .select("*")
-        .eq("id",id)
-        .single();
-
-    let s1 = data.score1 || 0;
-    let s2 = data.score2 || 0;
-    let race = data.race_to || 7;
-
-    if(player === 1) s1++;
-    if(player === 2) s2++;
-
-    let status = "live";
-
-    if(s1 >= race || s2 >= race){
-        status = "finished";
-    }
-
-    await supabaseClient
-        .from("matches")
-        .update({
-            score1:s1,
-            score2:s2,
-            status:status
-        })
-        .eq("id",id);
-
-    loadAdminMatches();
+ for(let i=0;i<size/2;i++){
+  await supabaseClient.from("matches").insert({
+   event_id:eventId,
+   round:1,
+   position:i,
+   player1:data[i]?.player_id||null,
+   player2:data[size-1-i]?.player_id||null
+  });
+ }
 }
 
-/* =========================
-OWNER CREATE EVENT
-========================= */
-
-async function createEvent(){
-
-    const name = document.getElementById("eventNameInput").value;
-    const venue = document.getElementById("venueInput").value;
-    const race = document.getElementById("raceInput").value;
-    const format = document.getElementById("formatInput").value;
-
-    await supabaseClient
-        .from("events")
-        .insert({
-            name:name,
-            venue:venue,
-            race_to:race,
-            format:format
-        });
-
-    alert("Event Created");
+/* ========= OWNER ========= */
+async function updateRace(){
+ const val=document.getElementById("race").value;
+ await supabaseClient.from("events")
+ .update({race_to:val})
+ .eq("id",EVENT_ID);
 }
 
-/* =========================
-REALTIME
-========================= */
+async function updateFormat(){
+ const val=document.getElementById("format").value;
+ await supabaseClient.from("events")
+ .update({format:val})
+ .eq("id",EVENT_ID);
+}
 
-function initRealtime(){
-
-    supabaseClient
-        .channel("live")
-        .on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table: "matches"
-            },
-            payload => {
-
-                loadLive();
-                loadUpcoming();
-                loadFinished();
-                loadAdminMatches();
-
-            }
-        )
-        .subscribe();
+/* ========= REALTIME ========= */
+function realtime(){
+ supabaseClient.channel("live")
+ .on("postgres_changes",
+  {event:"*",schema:"public",table:"matches"},
+  ()=>{loadMatches();loadBracket();}
+ ).subscribe();
 }
