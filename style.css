@@ -1,29 +1,25 @@
 body{
   margin:0;
-  font-family:Inter, sans-serif;
+  font-family:Inter,sans-serif;
   background:#0f1012;
   color:white;
 }
-
 .container{
   padding:20px;
   max-width:1200px;
   margin:auto;
 }
-
 .card{
   background:#1a1c1f;
   border-radius:18px;
   padding:20px;
   margin-bottom:15px;
-  transition:0.25s ease;
+  transition:.25s ease;
 }
-
 .card:hover{
-  transform:translateY(-5px);
-  box-shadow:0 15px 35px rgba(0,0,0,0.6);
+  transform:translateY(-4px);
+  box-shadow:0 15px 35px rgba(0,0,0,.6);
 }
-
 button{
   border:none;
   border-radius:10px;
@@ -31,21 +27,16 @@ button{
   background:white;
   color:black;
   cursor:pointer;
-  margin-right:6px;
 }
-
 input,select{
   padding:6px;
   border-radius:8px;
   border:none;
-  margin-right:6px;
 }
-
 .streaming{
   color:red;
   font-weight:bold;
 }
-
 .bracket-line{
   border-left:2px solid #444;
   padding-left:10px;
