@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="container">
 <h2>Admin Panel</h2>
 
@@ -14,11 +15,31 @@
 <input id="topN" type="number" placeholder="Top N">
 <button onclick="makeKO()">Generate Knockout</button>
 
-<div id="matchList"></div>
+<div id="matches"></div>
 </div>
 
 <script src="supabase.js"></script>
 <script src="app.js"></script>
-<script>initAdmin();</script>
+<script>
+
+async function protect(){
+ const { data: { user } } = await supabaseClient.auth.getUser();
+ if(!user){ location.href="login.html"; return; }
+
+ const { data } = await supabaseClient
+   .from("profiles")
+   .select("role")
+   .eq("id",user.id)
+   .single();
+
+ if(!["owner","admin"].includes(data.role)){
+   location.href="index.html";
+ }
+}
+
+protect().then(()=>initAdmin());
+
+</script>
+
 </body>
 </html>
