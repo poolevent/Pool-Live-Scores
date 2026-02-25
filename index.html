@@ -1,27 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Live Scores</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script src="app.js"></script>
+<title>Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
-
 <body>
+<script src="supabase.js"></script>
+<script>
+async function checkRole(){
+ const {data:user}=await supabaseClient.auth.getUser();
+ const {data}=await supabaseClient
+   .from("profiles")
+   .select("role")
+   .eq("id",user.user.id)
+   .single();
 
-<header class="header">
-<h1 id="eventName">Loading Event...</h1>
-<div class="tabs">
-<button onclick="loadLive()">LIVE</button>
-<button onclick="loadUpcoming()">UPCOMING</button>
-<button onclick="loadFinished()">FINISHED</button>
-<button onclick="loadPlayers()">PLAYERS</button>
-<button onclick="loadVenue()">VENUE</button>
-</div>
-</header>
-
-<div id="content"></div>
-
+ if(data.role==="owner") location.href="owner.html";
+ else if(data.role==="admin") location.href="admin.html";
+ else location.href="index.html";
+}
+checkRole();
+</script>
 </body>
 </html>
