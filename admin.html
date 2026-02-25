@@ -1,18 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Panel</title>
-<link rel="stylesheet" href="style.css">
+<title>Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+<h2>Admin Panel</h2>
+
+<button onclick="shuffle()">Shuffle</button>
+<input id="topN" type="number" placeholder="Top N">
+<button onclick="makeKO()">Generate Knockout</button>
+
+<div id="matchList"></div>
+</div>
+
 <script src="supabase.js"></script>
 <script src="app.js"></script>
-</head>
-
-<body>
-
-<h2>ADMIN PANEL</h2>
-
-<div id="matchesAdmin"></div>
-
+<script>initAdmin();</script>
 </body>
 </html>
