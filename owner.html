@@ -1,46 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Owner</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<title>Owner Control</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<div class="container">
-<h2>Owner Control</h2>
+<h2>Owner Panel</h2>
 
-<input id="race" type="number" placeholder="Race To">
-<button onclick="updateRace()">Update Race</button>
+Race To:
+<input id="race" type="number">
+<button onclick="updateRace()">Update</button>
 
-<select id="format">
-<option value="round_robin">Round Robin</option>
-<option value="knockout">Knockout</option>
-</select>
-<button onclick="updateFormat()">Update Format</button>
-
-</div>
+Cut Line:
+<input id="cut" type="number">
+<button onclick="updateCut()">Set Cut</button>
 
 <script src="supabase.js"></script>
-<script src="app.js"></script>
 <script>
 
-async function protect(){
- const { data: { user } } = await supabaseClient.auth.getUser();
- if(!user){ location.href="login.html"; return; }
+async function updateRace(){
+  const val = parseInt(document.getElementById("race").value);
 
- const { data } = await supabaseClient
-   .from("profiles")
-   .select("role")
-   .eq("id",user.id)
-   .single();
-
- if(data.role!=="owner"){
-   location.href="index.html";
- }
+  await supabaseClient.from("matches")
+    .update({race_to: val});
+  
+  alert("Race updated!");
 }
 
-protect();
+async function updateCut(){
+  const val = parseInt(document.getElementById("cut").value);
+
+  await supabaseClient.from("tournaments")
+    .update({cut_line:val})
+    .eq("active",true);
+  
+  alert("Cut line set!");
+}
 
 </script>
 
