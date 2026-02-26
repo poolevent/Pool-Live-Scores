@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Round Robin Matches</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  background:#0B0B0B;
+  font-family:'Oswald',sans-serif;
+  color:white;
+}
+
+header{
+  padding:20px 40px;
+  border-bottom:1px solid #222;
+  font-size:22px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.match{
+  background:#141414;
+  border:1px solid #222;
+  margin:20px auto;
+  width:400px;
+}
+
+.player{
+  padding:12px 15px;
+  display:flex;
+  justify-content:space-between;
+  border-bottom:1px solid #1a1a1a;
+}
+
+.player:last-child{
+  border-bottom:none;
+}
+
+.score{
+  color:#C6A75E;
+}
+
+.winner{
+  background:#1c1c1c;
+  color:#C6A75E;
+}
+
+.flag{
+  width:20px;
+  margin-right:8px;
+}
+</style>
+</head>
+<body>
+
+<header>ROUND ROBIN MATCHES</header>
+<div id="matches"></div>
+
+<script>
+const supabase = window.supabase.createClient(
+"https://rrjxsdxaholwhdzidpvx.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyanhzZHhhaG9sd2hkemlkcHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MzcwNTcsImV4cCI6MjA4NzQxMzA1N30.VIcs9IqSpZUAw43gYYQ4RWWb29dBIk422BuQzWeyA6k"
+);
+
+async function load(){
+
+  const {data} = await supabase.from("matches").select("*");
+
+  const container = document.getElementById("matches");
+  container.innerHTML = "";
+
+  for(const m of data){
+
+    const p1 = await supabase.from("players").select("country").eq("name",m.player1).single();
+    const p2 = await supabase.from("players").select("country").eq("name",m.player2).single();
+
+    container.innerHTML += `
+      <div class="match">
+        <div class="player ${m.winner===m.player1?'winner':''}">
+          <span>
+            <img class="flag" src="https://flagcdn.com/w40/${p1.data?.country?.toLowerCase()||'gb'}.png">
+            ${m.player1||'-'}
+          </span>
+          <span class="score">${m.score1}</span>
+        </div>
+        <div class="player ${m.winner===m.player2?'winner':''}">
+          <span>
+            <img class="flag" src="https://flagcdn.com/w40/${p2.data?.country?.toLowerCase()||'gb'}.png">
+            ${m.player2||'-'}
+          </span>
+          <span class="score">${m.score2}</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
+load();
+
+supabase.channel("realtime")
+.on("postgres_changes",{event:"*",schema:"public",table:"matches"},payload=>load())
+.subscribe();
+
+</script>
+
+</body>
+</html>
