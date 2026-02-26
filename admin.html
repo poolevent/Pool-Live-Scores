@@ -2,42 +2,100 @@
 <html>
 <head>
 <title>Admin</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<div class="container">
-<h2>Admin Panel</h2>
+<h1>Admin Score Panel</h1>
 
-<button onclick="shuffle()">Shuffle</button>
-<input id="topN" type="number" placeholder="Top N">
-<button onclick="makeKO()">Generate Knockout</button>
-
-<div id="matches"></div>
-</div>
+<div id="adminMatches"></div>
 
 <script src="supabase.js"></script>
-<script src="app.js"></script>
 <script>
 
-async function protect(){
- const { data: { user } } = await supabaseClient.auth.getUser();
- if(!user){ location.href="login.html"; return; }
+async function initAdmin(){
+  const { data: matches } = await supabaseClient
+    .from("matches")
+    .select("*")
+    .order("round",{ascending:true})
+    .order("match_number",{ascending:true});
 
- const { data } = await supabaseClient
-   .from("profiles")
-   .select("role")
-   .eq("id",user.id)
-   .single();
+  let html = "";
+  matches.forEach(m=>{
+    html += `
+      <div>
+        ${m.player1 || '-'}
+        <input 
+          type="number" 
+          value="${m.score1}" 
+          onchange="updateScore(${m.id},1,this.value)"
+        >
+        vs
+        <input 
+          type="number" 
+          value="${m.score2}" 
+          onchange="updateScore(${m.id},2,this.value)"
+        >
+        ${m.player2 || '-'}
+      </div>
+    `;
+  });
 
- if(!["owner","admin"].includes(data.role)){
-   location.href="index.html";
- }
+  document.getElementById("adminMatches").innerHTML = html;
 }
 
-protect().then(()=>initAdmin());
+async function updateScore(id,player,val){
+  const pkg = player===1 
+    ? { score1: parseInt(val) }
+    : { score2: parseInt(val) };
+
+  await supabaseClient.from("matches")
+    .update(pkg)
+    .eq("id",id);
+
+  checkWinner(id);
+}
+
+async function checkWinner(id){
+  const { data } = await supabaseClient
+    .from("matches")
+    .select("*")
+    .eq("id",id)
+    .single();
+
+  if(data.score1 >= data.race_to){
+    await supabaseClient.from("matches").update({winner:data.player1}).eq("id",id);
+    autoAdvance(data,data.player1);
+  }
+  if(data.score2 >= data.race_to){
+    await supabaseClient.from("matches").update({winner:data.player2}).eq("id",id);
+    autoAdvance(data,data.player2);
+  }
+}
+
+async function autoAdvance(match,winner){
+  const nextRound = match.round + 1;
+  const nextMatchNum = Math.ceil(match.match_number/2);
+
+  const { data } = await supabaseClient.from("matches")
+    .select("*")
+    .eq("round",nextRound)
+    .eq("match_number",nextMatchNum)
+    .single();
+
+  if(data){
+    const key = (match.match_number %2===1) 
+      ? "player1" 
+      : "player2";
+
+    await supabaseClient.from("matches")
+      .update({ [key]: winner })
+      .eq("id", data.id);
+  }
+}
+
+initAdmin();
 
 </script>
 
