@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Standings</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  background:#0B0B0B;
+  font-family:'Oswald',sans-serif;
+  color:white;
+}
+
+header{
+  padding:20px 40px;
+  border-bottom:1px solid #222;
+  font-size:22px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+button{
+  background:#C6A75E;
+  border:none;
+  padding:10px 18px;
+  font-family:'Oswald';
+  letter-spacing:1px;
+  cursor:pointer;
+}
+
+table{
+  width:90%;
+  margin:40px auto;
+  border-collapse:collapse;
+}
+
+th{
+  text-align:left;
+  padding:12px;
+  font-size:12px;
+  letter-spacing:2px;
+  color:#888;
+  border-bottom:1px solid #222;
+}
+
+td{
+  padding:14px 12px;
+  border-bottom:1px solid #1a1a1a;
+}
+
+.rank{
+  color:#C6A75E;
+}
+
+.flag{
+  width:22px;
+  vertical-align:middle;
+  margin-right:10px;
+}
+
+.cutline{
+  border-bottom:2px solid #C6A75E !important;
+}
+
+.top{
+  color:#C6A75E;
+}
+</style>
+</head>
+<body>
+
+<header>
+  ROUND ROBIN STANDINGS
+  <button onclick="generateKO()">GENERATE KNOCKOUT</button>
+</header>
+
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>PLAYER</th>
+<th>W</th>
+<th>L</th>
+<th>DIFF</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+
+<script>
+const supabase = window.supabase.createClient(
+"https://rrjxsdxaholwhdzidpvx.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJyanhzZHhhaG9sd2hkemlkcHZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MzcwNTcsImV4cCI6MjA4NzQxMzA1N30.VIcs9IqSpZUAw43gYYQ4RWWb29dBIk422BuQzWeyA6k"
+);
+
+let cutLine = 4;
+
+async function loadStandings(){
+
+  const {data:tour} = await supabase
+    .from("tournaments")
+    .select("cut_line")
+    .eq("active",true)
+    .single();
+
+  cutLine = tour.cut_line;
+
+  const {data} = await supabase.from("standings").select("*");
+
+  const body = document.getElementById("tableBody");
+  body.innerHTML = "";
+
+  let rank = 1;
+
+  for(const row of data){
+
+    const {data:player} = await supabase
+      .from("players")
+      .select("country")
+      .eq("name",row.player)
+      .single();
+
+    body.innerHTML += `
+      <tr class="${rank===cutLine?'cutline':''}">
+        <td class="rank">${rank}</td>
+        <td class="${rank<=cutLine?'top':''}">
+          <img class="flag" src="https://flagcdn.com/w40/${player.country.toLowerCase()}.png">
+          ${row.player}
+        </td>
+        <td>${row.wins}</td>
+        <td>${row.losses}</td>
+        <td>${row.difference}</td>
+      </tr>
+    `;
+
+    rank++;
+  }
+}
+
+async function generateKO(){
+  await supabase.rpc("auto_generate_ko");
+  alert("Knockout Generated!");
+}
+
+loadStandings();
+
+supabase.channel("realtime")
+.on("postgres_changes",{event:"*",schema:"public",table:"matches"},payload=>loadStandings())
+.subscribe();
+
+</script>
+
+</body>
+</html>
